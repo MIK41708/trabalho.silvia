@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGM - Gestão de Manutenção v4.0</title>
+    <style>
+        :root {
+            --azul-marca: #044689;
+            --vermelho-botao: #8a0b0b;
+            --cor-secundaria: #e3feff;
+            --branco: #ffffff;
+            --texto: #1a1a1a;
+            --cinza-claro: #f4f4f4;
+            --sucesso: #2e7d32;
+        }
+ 
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--branco); color: var(--texto); overflow-x: hidden; }
+ 
+        /* HEADER */
+        .header {
+            height: 65px; border-bottom: 3px solid var(--azul-marca);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+            position: sticky; top: 0; background: white; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .logo { font-weight: 800; color: var(--azul-marca); font-size: 1.3rem; letter-spacing: -0.5px;}
+        .logo span { color: var(--vermelho-botao); }
+        .pov-switch select { padding: 8px; border: 2px solid var(--azul-marca); color: var(--azul-marca); font-weight: bold; cursor: pointer; background: var(--branco); }
+ 
+        /* LAYOUT */
+        .main-container { display: flex; min-height: calc(100vh - 65px); }
+        .sidebar {
+            width: 260px; background: var(--cor-secundaria); border-right: 2px solid var(--azul-marca);
+            padding: 20px 0; display: flex; flex-direction: column; flex-shrink: 0;
+        }
+        .nav-item {
+            padding: 16px 25px; cursor: pointer; border-bottom: 1px solid rgba(4, 70, 137, 0.1);
+            font-weight: bold; color: var(--azul-marca); display: flex; align-items: center; justify-content: space-between;
+            transition: 0.2s ease;
+        }
+        .nav-item:hover { background: rgba(4, 70, 137, 0.1); }
+        .nav-item.active { background: var(--azul-marca); color: white; border-left: 5px solid var(--vermelho-botao); }
+        .badge-notify { background: var(--vermelho-botao); color: white; padding: 3px 10px; border-radius: 12px; font-size: 0.75rem; box-shadow: 0 0 5px rgba(138,11,11,0.5); }
+ 
+        .content { flex: 1; padding: 25px; max-width: 100%; overflow-y: auto; background: var(--cinza-claro); }
+ 
+        /* COMPONENTES GERAIS */
+        .btn {
+            background: var(--vermelho-botao); color: white; border: none; padding: 12px 20px;
+            cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn-sec { background: transparent; border: 2px solid var(--azul-marca); color: var(--azul-marca); padding: 8px 15px; font-weight: bold; cursor: pointer;}
+        .btn-sec:hover { background: var(--azul-marca); color: white; }
+ 
+        /* CARDS E GRIDS */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        .ticket-card {
+            background: white; border: 1px solid #ddd; padding: 20px;
+            border-left: 6px solid var(--azul-marca); box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .tag { font-size: 11px; padding: 3px 8px; border: 1px solid #000; font-weight: bold; display: inline-block; text-transform: uppercase; width: fit-content; }
+       
+        .status-novo { background: #ffeeba; color: #856404; border-color: #856404; }
+        .status-ocioso { background: #e2e3e5; color: #383d41; border-color: #383d41;}
+        .status-andamento { background: #cce5ff; color: #004085; border-color: #004085;}
+        .status-peca { background: #f8d7da; color: #721c24; border-color: #721c24;}
+        .status-finalizado { background: #d4edda; color: #155724; border-color: #155724;}
+ 
+        /* FORMULÁRIOS */
+        .industrial-card { background: white; padding: 25px; border-top: 5px solid var(--azul-marca); box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 6px; color: var(--azul-marca); text-transform: uppercase;}
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid #ccc; font-family: inherit; background: #fff;
+        }
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--azul-marca); outline: none; }
+ 
+        /* MODAL */
+        .modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none;
+            align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .modal-content { background: white; width: 100%; max-width: 1000px; max-height: 90vh; overflow-y: auto; border: 4px solid var(--azul-marca); }
+        .modal-header { padding: 18px 25px; background: var(--cor-secundaria); border-bottom: 2px solid var(--azul-marca); display: flex; justify-content: space-between; align-items: center; }
+ 
+        /* INVENTARIO (UX Otimizada) */
+        .inv-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; flex-wrap: wrap;}
+        .inv-search { flex: 1; min-width: 250px; padding: 12px; border: 2px solid var(--azul-marca); font-size: 15px; }
+        .inv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .inv-item { background: white; border: 1px solid #ccc; padding: 15px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative;}
+        .inv-item img { width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px; }
+        .inv-item h4 { font-size: 14px; margin-bottom: 5px; color: var(--azul-marca); height: 35px; overflow: hidden;}
+        .inv-qtd { font-size: 22px; font-weight: bold; margin: 10px 0; }
+        .inv-qtd.baixo { color: var(--vermelho-botao); }
+        .inv-actions { display: flex; justify-content: center; gap: 5px; }
+        .inv-actions button { padding: 5px 10px; cursor: pointer; font-weight: bold; border: 1px solid #ccc; background: #f9f9f9;}
+        .inv-actions button:hover { background: #eee; }
+        .btn-del-item { position: absolute; top: 5px; right: 5px; background: transparent; border: none; color: var(--vermelho-botao); cursor: pointer; font-size: 16px;}
+ 
+        /* FOTOS E GALERIA */
+        .photo-gallery { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .photo-item { width: 100px; height: 100px; object-fit: cover; border: 2px solid var(--azul-marca); border-radius: 4px; }
+        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%;}
+        .file-upload-wrapper input[type=file] { padding: 10px; cursor: pointer; border: 2px dashed var(--azul-marca); background: #f9f9f9; width: 100%; }
+ 
+        /* TOAST NOTIFICATION */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;}
+        .toast { background: var(--azul-marca); color: white; padding: 15px 25px; border-radius: 4px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transform: translateY(20px); transition: all 0.3s ease;}
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.error { background: var(--vermelho-botao); }
+        .toast.success { background: var(--sucesso); }
+ 
+        /* RESPONSIVIDADE */
+        @media (max-width: 768px) {
+            .main-container { flex-direction: column; }
+            .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; justify-content: center; padding: 10px; }
+            .nav-item { padding: 10px 15px; border-bottom: none; border-right: 1px solid rgba(4,70,137,0.1); font-size: 13px;}
+            .nav-item.active { border-left: none; border-bottom: 3px solid var(--vermelho-botao); }
+            .modal-content { max-height: 95vh; }
+            .form-grid-2 { grid-template-columns: 1fr !important; }
+        }
+    </style>
+</head>
+<body onload="initSystem()">
+ 
+    <header class="header">
+        <div class="logo">METAL<span>URGICA</span> <small style="font-size: 0.6em; color: #666;">SGM v4.0</small></div>
+        <div class="pov-switch">
+            <select id="povSelector" onchange="switchPOV()">
+                <option value="usuario">⚙️ PERFIL: SOLICITANTE</option>
+                <option value="operador">🔧 PERFIL: MANUTENÇÃO</option>
+            </select>
+        </div>
+    </header>
+ 
+    <div class="main-container">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="content" id="main-content"></main>
+    </div>
+ 
+    <div id="modal" class="modal">
+        <div class="modal-content" id="modal-body"></div>
+    </div>
+ 
+    <div id="toast-container"></div>
+ 
+    <script>
+        // --- BASE DE DADOS LOCAL ---
+        let tickets = JSON.parse(localStorage.getItem('sgm_tickets_v4')) || [];
+        let inventory = JSON.parse(localStorage.getItem('sgm_inventory_v4')) || [
+            {id: 101, nome: "Rolamento NSK 6204", qtd: 15, min: 5, img: "https://via.placeholder.com/150/cccccc/044689?text=Rolamento"},
+            {id: 102, nome: "Graxa Lítio Azul 1kg", qtd: 3, min: 5, img: "https://via.placeholder.com/150/cccccc/044689?text=Graxa"},
+            {id: 103, nome: "Válvula Pneumática 5/2", qtd: 8, min: 2, img: "https://via.placeholder.com/150/cccccc/044689?text=Valvula"}
+        ];
+ 
+        let currentPOV = 'usuario';
+        let currentScreen = 'home';
+        let searchQuery = "";
+ 
+        function save() {
+            localStorage.setItem('sgm_tickets_v4', JSON.stringify(tickets));
+            localStorage.setItem('sgm_inventory_v4', JSON.stringify(inventory));
+            renderSidebar(); // Atualiza badges
+        }
+ 
+        // --- SISTEMA UX: TOAST ---
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerText = msg;
+            container.appendChild(toast);
+           
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+ 
+        // --- NAVEGAÇÃO ---
+        function initSystem() { switchPOV(); }
+ 
+        function switchPOV() {
+            currentPOV = document.getElementById('povSelector').value;
+            currentScreen = (currentPOV === 'usuario') ? 'novo-chamado' : 'notificacoes';
+            render();
+        }
+ 
+        function setScreen(screen) {
+            currentScreen = screen;
+            searchQuery = ""; // limpa busca ao mudar de tela
+            render();
+        }
+ 
+        function render() {
+            renderSidebar();
+            renderContent();
+        }
+ 
+        // --- RENDERIZAÇÃO ESTRUTURAL ---
+        function renderSidebar() {
+            const sb = document.getElementById('sidebar');
+            const novoCount = tickets.filter(t => t.status === 'Novo').length;
+            const ociosoCount = tickets.filter(t => t.status === 'Ocioso').length;
+ 
+            if (currentPOV === 'usuario') {
+                sb.innerHTML = `
+                    <div class="nav-item ${currentScreen === 'novo-chamado' ? 'active' : ''}" onclick="setScreen('novo-chamado')">Criar Ocorrência</div>
+                    <div class="nav-item ${currentScreen === 'meus-chamados' ? 'active' : ''}" onclick="setScreen('meus-chamados')">Acompanhar OS</div>
+                `;
+            } else {
+                sb.innerHTML = `
+                    <div class="nav-item ${currentScreen === 'notificacoes' ? 'active' : ''}" onclick="setScreen('notificacoes')">
+                        Entrada ${novoCount > 0 ? `<span class="badge-notify">${novoCount}</span>` : ''}
+                    </div>
+                    <div class="nav-item ${currentScreen === 'disponiveis' ? 'active' : ''}" onclick="setScreen('disponiveis')">
+                        Fila de Espera ${ociosoCount > 0 ? `<span class="badge-notify" style="background:#555">${ociosoCount}</span>` : ''}
+                    </div>
+                    <div class="nav-item ${currentScreen === 'meus-trabalhos' ? 'active' : ''}" onclick="setScreen('meus-trabalhos')">Minha Oficina</div>
+                    <div class="nav-item ${currentScreen === 'inventario' ? 'active' : ''}" onclick="setScreen('inventario')">Estoque / Peças</div>
+                    <div class="nav-item ${currentScreen === 'historico' ? 'active' : ''}" onclick="setScreen('historico')">Arquivo Morto</div>
+                `;
+            }
+        }
+ 
+        function renderContent() {
+            const main = document.getElementById('main-content');
+            switch (currentScreen) {
+                case 'novo-chamado': main.innerHTML = renderFormNovoChamado(); break;
+                case 'notificacoes': main.innerHTML = `<h2 style="color:var(--azul-marca); margin-bottom: 20px;">Novas Solicitações de Intervenção</h2>` + renderTicketGrid(tickets.filter(t => t.status === 'Novo')); break;
+                case 'disponiveis': main.innerHTML = `<h2 style="color:var(--azul-marca); margin-bottom: 20px;">OS Aguardando Atribuição</h2>` + renderTicketGrid(tickets.filter(t => t.status === 'Ocioso')); break;
+                case 'meus-trabalhos': main.innerHTML = `<h2 style="color:var(--azul-marca); margin-bottom: 20px;">Minhas Manutenções Ativas</h2>` + renderTicketGrid(tickets.filter(t => t.assignedTo === 'Técnico 01' && t.status !== 'Finalizado')); break;
+                case 'meus-chamados': main.innerHTML = `<h2 style="color:var(--azul-marca); margin-bottom: 20px;">Minhas Solicitações</h2>` + renderTicketGrid(tickets.filter(t => t.status !== 'Finalizado')); break;
+                case 'inventario': main.innerHTML = renderInventarioUX(); break;
+                case 'historico': main.innerHTML = `<h2 style="color:var(--azul-marca); margin-bottom: 20px;">Histórico Global (Finalizados)</h2>` + renderTicketGrid(tickets.filter(t => t.status === 'Finalizado')); break;
+            }
+        }
+ 
+        // --- TELAS E COMPONENTES ---
+        function renderFormNovoChamado() {
+            return `
+                <div class="industrial-card" style="max-width: 700px; margin: 0 auto;">
+                    <h2 style="color: var(--azul-marca); margin-bottom: 5px;">ABERTURA DE OS CORRETIVA</h2>
+                    <p style="color: #666; font-size: 13px; margin-bottom: 20px;">Preencha os dados técnicos da falha encontrada.</p>
+                    <div class="form-group">
+                        <label>Equipamento / Setor</label>
+                        <input type="text" id="f-equip" placeholder="Ex: Torno CNC 04 - Setor de Usinagem">
+                    </div>
+                    <div class="form-group">
+                        <label>Sintoma / Relato da Falha</label>
+                        <textarea id="f-desc" rows="4" placeholder="Descreva ruídos, vazamentos ou códigos de erro do painel..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Prioridade da Operação</label>
+                        <select id="f-prio">
+                            <option value="Baixa">Rotina (Sem impacto na produção)</option>
+                            <option value="Média" selected>Média (Atenção necessária)</option>
+                            <option value="Urgente">URGENTE (Máquina Parada / Risco)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Anexar Evidências (Fotos)</label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="f-fotos" multiple accept="image/*" onchange="previewCreationImages(this)">
+                        </div>
+                        <div id="creation-photo-preview" class="photo-gallery"></div>
+                    </div>
+                    <button class="btn" style="width: 100%; margin-top: 10px;" onclick="criarChamado()">ENVIAR PARA MANUTENÇÃO</button>
+                </div>
+            `;
+        }
+ 
+        function renderTicketGrid(lista) {
+            if (lista.length === 0) return `<div style="padding: 30px; text-align: center; color: #666; background: white; border: 1px dashed #ccc;">Nenhum registro encontrado nesta categoria.</div>`;
+            return `<div class="card-grid">${lista.map(t => `
+                <div class="ticket-card">
+                    <div style="display:flex; justify-content: space-between; align-items:flex-start;">
+                        <span class="tag status-${t.status.replace(/\s+/g, '-').toLowerCase()}">${t.status}</span>
+                        <span style="font-size: 11px; font-weight: bold; color: var(--azul-marca);">#${t.id}</span>
+                    </div>
+                    <h3 style="color: var(--azul-marca); font-size: 16px;">${t.equip}</h3>
+                    <p style="font-size: 13px; color: #555; flex: 1;">${t.desc.substring(0, 80)}${t.desc.length > 80 ? '...' : ''}</p>
+                    <div style="font-size: 11px; color: #888; margin-bottom: 10px;">🕒 ${t.data} | Resp: ${t.assignedTo || 'Pendente'}</div>
+                    <button class="btn-sec" style="width:100%" onclick="verDetalhes(${t.id})">ABRIR PAINEL DE OS</button>
+                </div>
+            `).join('')}</div>`;
+        }
+ 
+        // --- GESTÃO DE INVENTÁRIO (UX OTIMIZADA) ---
+        function updateSearch(val) { searchQuery = val.toLowerCase(); renderContent(); }
+ 
+        function renderInventarioUX() {
+            const list = inventory.filter(i => i.nome.toLowerCase().includes(searchQuery));
+            let html = `
+                <div class="inv-controls">
+                    <div>
+                        <h2 style="color:var(--azul-marca);">Almoxarifado Virtual</h2>
+                        <p style="font-size: 12px; color: #666;">Controle integrado de peças. Quantidades deduzidas automaticamente nas OS.</p>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" class="inv-search" placeholder="🔍 Buscar insumo..." value="${searchQuery}" onkeyup="updateSearch(this.value)">
+                        <button class="btn" onclick="novoItemModal()">+ ADICIONAR PEÇA</button>
+                    </div>
+                </div>
+                <div class="inv-grid">
+            `;
+           
+            if(list.length === 0) html += `<p style="grid-column: 1/-1;">Nenhuma peça encontrada.</p>`;
+ 
+            list.forEach(item => {
+                const isBaixo = item.qtd <= item.min;
+                html += `
+                    <div class="inv-item" style="${isBaixo ? 'border: 2px solid var(--vermelho-botao);' : ''}">
+                        <button class="btn-del-item" onclick="deletarItemInv(${item.id})" title="Remover Peça do Sistema">✕</button>
+                        <img src="${item.img}" alt="Peça">
+                        <h4>${item.nome}</h4>
+                        <div class="inv-qtd ${isBaixo ? 'baixo' : ''}">${item.qtd} <span style="font-size:12px; font-weight:normal;">un</span></div>
+                        ${isBaixo ? '<div style="color:var(--vermelho-botao); font-size:11px; font-weight:bold; margin-bottom:10px;">⚠️ ESTOQUE CRÍTICO</div>' : '<div style="height:25px;"></div>'}
+                        <div class="inv-actions">
+                            <button onclick="ajustarQtd(${item.id}, -1)">-</button>
+                            <button onclick="ajustarQtd(${item.id}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            return html;
+        }
+ 
+        function ajustarQtd(id, delta) {
+            const item = inventory.find(i => i.id === id);
+            if (item.qtd + delta < 0) return showToast("A quantidade não pode ser negativa.", "error");
+            item.qtd += delta;
+            save();
+            renderContent();
+        }
+ 
+        function deletarItemInv(id) {
+            if(confirm("ATENÇÃO: Deseja apagar permanentemente este item do almoxarifado?")) {
+                inventory = inventory.filter(i => i.id !== id);
+                save();
+                renderContent();
+                showToast("Peça removida do sistema.", "success");
+            }
+        }
+ 
+        function novoItemModal() {
+            const nome = prompt("Descrição técnica da peça:");
+            if(!nome) return;
+            const qtdStr = prompt("Quantidade em estoque:", "0");
+            const minStr = prompt("Quantidade mínima (Alerta de Estoque):", "5");
+           
+            inventory.push({
+                id: Date.now(),
+                nome: nome,
+                qtd: parseInt(qtdStr) || 0,
+                min: parseInt(minStr) || 5,
+                img: `https://via.placeholder.com/150/cccccc/044689?text=${encodeURIComponent(nome.substring(0,8))}`
+            });
+            save();
+            renderContent();
+            showToast("Item cadastrado com sucesso!", "success");
+        }
+ 
+        // --- LÓGICA DE CHAMADOS & FOTOS BASE64 ---
+        let base64TempPhotos = [];
+ 
+        function previewCreationImages(input) {
+            const preview = document.getElementById('creation-photo-preview');
+            preview.innerHTML = "";
+            base64TempPhotos = [];
+ 
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    base64TempPhotos.push(e.target.result);
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'photo-item';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+ 
+        function criarChamado() {
+            const equip = document.getElementById('f-equip').value;
+            const desc = document.getElementById('f-desc').value;
+            const prio = document.getElementById('f-prio').value;
+ 
+            if(!equip || !desc) return showToast("Preencha equipamento e descrição.", "error");
+ 
+            const novo = {
+                id: Math.floor(Math.random() * 90000) + 10000,
+                equip, desc, prio,
+                data: new Date().toLocaleString(),
+                status: 'Novo',
+                assignedTo: null,
+                diagnostico: "", tempo: "",
+                fotos: [...base64TempPhotos],
+                pecas: [] // {idInv, nome}
+            };
+ 
+            tickets.push(novo);
+            save();
+            base64TempPhotos = [];
+            showToast("Ordem de Serviço gerada e enviada à Manutenção.", "success");
+            setScreen('meus-chamados');
+        }
+ 
+        // --- PAINEL DE OS (MODAL) ---
+        function verDetalhes(id) {
+            const t = tickets.find(x => x.id === id);
+           
+            if (currentPOV === 'operador' && t.status === 'Novo') {
+                t.status = 'Ocioso';
+                save();
+            }
+ 
+            const modal = document.getElementById('modal');
+            const body = document.getElementById('modal-body');
+           
+            body.innerHTML = `
+                <div class="modal-header">
+                    <div>
+                        <h2 style="color:var(--azul-marca); margin:0;">OS #${t.id}</h2>
+                        <span class="tag status-${t.status.replace(/\s+/g, '-').toLowerCase()}" style="margin-top:5px;">${t.status}</span>
+                    </div>
+                    <button onclick="fecharModal()" style="cursor:pointer; background:none; border:none; font-size:28px; color:var(--azul-marca);">&times;</button>
+                </div>
+                <div style="padding: 25px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;" class="form-grid-2">
+                       
+                        <div style="background: var(--cinza-claro); padding: 20px; border-radius: 4px; border: 1px solid #ddd;">
+                            <h3 style="color: var(--azul-marca); margin-bottom: 15px; border-bottom: 2px solid var(--azul-marca); padding-bottom:5px;">DADOS DA FALHA</h3>
+                            <p style="margin-bottom:10px;"><strong>Equipamento:</strong><br> ${t.equip}</p>
+                            <p style="margin-bottom:10px;"><strong>Sintoma:</strong><br> ${t.desc}</p>
+                            <p style="margin-bottom:10px;"><strong>Abertura:</strong><br> ${t.data} | <strong>Prioridade:</strong> ${t.prio}</p>
+                           
+                            <p style="margin-top:15px;"><strong>Evidências Fotográficas:</strong></p>
+                            <div class="photo-gallery" id="galeria-fotos-${t.id}">
+                                ${t.fotos.length > 0 ? t.fotos.map(f => `<img class="photo-item" src="${f}" onclick="window.open('${f}')" style="cursor:zoom-in">`).join('') : '<span style="font-size:12px; color:#666;">Nenhuma foto anexada.</span>'}
+                            </div>
+                           
+                            ${currentPOV === 'operador' && t.status !== 'Finalizado' ? `
+                                <div style="margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 15px;">
+                                    <label style="font-size:12px; font-weight:bold;">Anexar nova foto da reparação:</label>
+                                    <input type="file" multiple accept="image/*" onchange="adicionarFotoOS(this, ${t.id})" style="font-size:12px; margin-top:5px;">
+                                </div>
+                            ` : ''}
+                        </div>
+ 
+                        <div>
+                            <h3 style="color: var(--vermelho-botao); margin-bottom: 15px; border-bottom: 2px solid var(--vermelho-botao); padding-bottom:5px;">DIAGNÓSTICO TÉCNICO</h3>
+                            ${renderPainelOperador(t)}
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.style.display = 'flex';
+        }
+ 
+        function adicionarFotoOS(input, id) {
+            const t = tickets.find(x => x.id === id);
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    t.fotos.push(e.target.result);
+                    save();
+                    verDetalhes(id); // Recarrega para mostrar a foto
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+ 
+        function renderPainelOperador(t) {
+            if (currentPOV === 'usuario') {
+                return `
+                    <p style="margin-bottom:10px;"><strong>Técnico Responsável:</strong><br> ${t.assignedTo || '<span style="color:#888;">Na fila de espera</span>'}</p>
+                    <p style="margin-bottom:10px;"><strong>Laudo Técnico:</strong><br> ${t.diagnostico || '<span style="color:#888;">Aguardando avaliação</span>'}</p>
+                    <p style="margin-bottom:10px;"><strong>Tempo Gasto:</strong> ${t.tempo ? t.tempo + ' horas' : '-'}</p>
+                    <div style="background:white; padding:10px; border:1px solid #ccc; margin-top:10px;">
+                        <strong>Peças Substituídas:</strong><br>
+                        <ul style="padding-left: 20px; font-size:13px; margin-top:5px;">
+                            ${t.pecas.length ? t.pecas.map(p => `<li>${p.nome}</li>`).join('') : '<li style="color:#888;">Nenhuma peça registrada</li>'}
+                        </ul>
+                    </div>
+                `;
+            }
+ 
+            return `
+                <div class="form-group">
+                    <label>Atribuição</label>
+                    <select onchange="atualizarOS(${t.id}, 'assignedTo', this.value)">
+                        <option value="">-- Selecionar Técnico --</option>
+                        <option value="Técnico 01" ${t.assignedTo === 'Técnico 01' ? 'selected' : ''}>Técnico 01 (Você)</option>
+                        <option value="Equipe Elétrica" ${t.assignedTo === 'Equipe Elétrica' ? 'selected' : ''}>Equipe Elétrica</option>
+                        <option value="Terceirizado" ${t.assignedTo === 'Terceirizado' ? 'selected' : ''}>Oficina Externa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Alterar Status</label>
+                    <select onchange="atualizarOS(${t.id}, 'status', this.value)" ${!t.assignedTo ? 'disabled' : ''}>
+                        <option value="Ocioso" ${t.status === 'Ocioso' ? 'selected' : ''}>Ocioso (Na Fila)</option>
+                        <option value="Em andamento" ${t.status === 'Em andamento' ? 'selected' : ''}>Em Execução</option>
+                        <option value="Aguardando peça" ${t.status === 'Aguardando peça' ? 'selected' : ''}>Pendente (Falta Peça)</option>
+                        <option value="Finalizado" ${t.status === 'Finalizado' ? 'selected' : ''}>Serviço Concluído</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Laudo / Atividades Realizadas</label>
+                    <textarea rows="3" onblur="atualizarOS(${t.id}, 'diagnostico', this.value)" placeholder="Relate o serviço executado...">${t.diagnostico}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Mão de Obra (Horas)</label>
+                    <input type="number" step="0.5" value="${t.tempo}" placeholder="Ex: 2.5" onblur="atualizarOS(${t.id}, 'tempo', this.value)">
+                </div>
+               
+                <div class="form-group" style="background:#f9f9f9; padding:15px; border:1px dashed var(--azul-marca);">
+                    <label>Baixa de Estoque (Peças Vinculadas)</label>
+                    <div style="display: flex; gap: 5px;">
+                        <select id="sel-peca-${t.id}">
+                            <option value="">Selecione um item...</option>
+                            ${inventory.filter(i=>i.qtd > 0).map(i => `<option value="${i.id}">${i.nome} (Qtd: ${i.qtd})</option>`).join('')}
+                        </select>
+                        <button class="btn" style="padding: 10px;" onclick="addPecaOS(${t.id})">INCLUIR</button>
+                    </div>
+                   
+                    <div style="margin-top: 10px;">
+                        ${t.pecas.map((p, idx) => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:5px 10px; border:1px solid #ccc; margin-bottom:5px; font-size:12px;">
+                                <span>🔧 ${p.nome}</span>
+                                <button style="color:var(--vermelho-botao); border:none; background:none; cursor:pointer; font-weight:bold;" onclick="remPecaOS(${t.id}, ${idx})">DEVOLVER</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+ 
+        // --- LÓGICA DE DEDUÇÃO E ATUALIZAÇÃO ---
+        function atualizarOS(id, campo, valor) {
+            const t = tickets.find(x => x.id === id);
+            t[campo] = valor;
+            if (campo === 'assignedTo' && valor && t.status === 'Ocioso') t.status = 'Em andamento';
+            save();
+           
+            if (campo === 'status' && valor === 'Finalizado') {
+                showToast("Ordem de serviço arquivada com sucesso.", "success");
+                fecharModal();
+                setScreen('meus-trabalhos');
+            } else {
+                verDetalhes(id); // recarrega a tela
+            }
+        }
+ 
+        function addPecaOS(ticketId) {
+            const select = document.getElementById(`sel-peca-${ticketId}`);
+            const itemInvId = parseInt(select.value);
+            if (!itemInvId) return;
+ 
+            const t = tickets.find(x => x.id === ticketId);
+            const itemInv = inventory.find(i => i.id === itemInvId);
+ 
+            if (itemInv && itemInv.qtd > 0) {
+                t.pecas.push({ idInv: itemInv.id, nome: itemInv.nome });
+                itemInv.qtd--; // Dedução Imediata
+                save();
+                showToast(`1x ${itemInv.nome} baixado do estoque.`, "success");
+                verDetalhes(ticketId);
+            }
+        }
+ 
+        function remPecaOS(ticketId, indexPeca) {
+            const t = tickets.find(x => x.id === ticketId);
+            const pecaRemovida = t.pecas[indexPeca];
+            const itemInv = inventory.find(i => i.id === pecaRemovida.idInv);
+           
+            if (itemInv) itemInv.qtd++; // Devolução ao estoque real
+           
+            t.pecas.splice(indexPeca, 1);
+            save();
+            showToast("Peça removida da OS e devolvida ao estoque.", "info");
+            verDetalhes(ticketId);
+        }
+ 
+        function fecharModal() { document.getElementById('modal').style.display = 'none'; }
+    </script>
+</body>
+</html>

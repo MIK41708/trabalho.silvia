@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MetalGestão</title>
+    <style>
+        * {
+            margin: 0; padding: 0; box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+ 
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+            url('https://media.istockphoto.com/id/1369010523/photo/roll-of-galvanized-steel-sheet-at-metalworking-factory.jpg?s=612x612&w=0&k=20&c=HaY-0pNi1L2UpMggvRlB5NssiUXbW-S8IClRlz4NLa8=');
+            background-size: cover;
+            background-position: center;
+        }
+ 
+        .login-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            padding: 50px 40px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+ 
+        .login-card h2 {
+            color: #fff;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+ 
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+ 
+        .input-group label {
+            display: block;
+            color: #eee;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+ 
+        /* Estilo para Inputs e Select */
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 4px;
+            outline: none;
+            font-size: 1rem;
+            color: #333;
+            transition: 0.3s;
+            /* Remove a aparência padrão do navegador no select */
+            appearance: none;
+            -webkit-appearance: none;
+        }
+ 
+        /* Adicionando uma setinha customizada para o select */
+        .select-wrapper {
+            position: relative;
+        }
+ 
+        .select-wrapper::after {
+            content: '▼';
+            font-size: 0.7rem;
+            color: #666;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+ 
+        .input-group input:focus,
+        .input-group select:focus {
+            background: #fff;
+            box-shadow: 0 0 10px rgba(211, 47, 47, 0.4);
+        }
+ 
+        .btn-submit {
+            width: 100%;
+            background: none;
+            border: 2px solid #d32f2f;
+            color: #fff;
+            padding: 15px;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            margin-top: 15px;
+        }
+ 
+        .btn-submit:hover {
+            background-color: #d32f2f;
+            letter-spacing: 7px;
+            transform: translateY(-3px);
+        }
+ 
+        .extras { margin-top: 25px; }
+        .extras a { color: #aaa; text-decoration: none; font-size: 0.8rem; }
+        .extras a:hover { color: #fff; text-decoration: underline; }
+    </style>
+</head>
+<body>
+ 
+    <div class="login-card">
+        <h2>Acesso</h2>
+ 
+        <form id="loginForm">
+            <div class="input-group">
+                <label>E-mail ou Matrícula</label>
+                <input type="text" id="email" placeholder="ID do Colaborador" required>
+            </div>
+ 
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="senha" placeholder="••••••••" required>
+            </div>
+ 
+            <div class="input-group">
+                <label>Cargo / Função</label>
+                <div class="select-wrapper">
+                    <select id="cargo" required>
+                        <option value="" disabled selected>Selecione seu cargo</option>
+                        <option value="supervisor">Supervisor</option>
+                        <option value="tecnico">Técnico</option>
+                        <option value="engenheiro">Engenheiro</option>
+                    </select>
+                </div>
+            </div>
+ 
+            <button type="submit" class="btn-submit">Entrar</button>
+        </form>
+ 
+        <div id="mensagemErro" style="color: #ff6b6b; margin-top: 15px; display: none; font-size: 0.9rem;"></div>
+ 
+        <div class="extras">
+            <a href="/inicial/index.html">← Voltar para a Home</a>
+        </div>
+    </div>
+ 
+    <script>
+        // Credenciais fixas por cargo
+        const credenciais = {
+            supervisor: {
+                email: "supervisor@metalgestal.com",
+                senha: "sup123456",
+                nome: "João Silva",
+                matricula: "SUP001"
+            },
+            tecnico: {
+                email: "tecnico@metalgestal.com",
+                senha: "tec123456",
+                nome: "Carlos Andrade",
+                matricula: "TEC001"
+            },
+            engenheiro: {
+                email: "engenheiro@metalgestal.com",
+                senha: "eng123456",
+                nome: "Ana Costa",
+                matricula: "ENG001"
+            }
+        };
+ 
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const senhaInput = document.getElementById('senha');
+        const cargoSelect = document.getElementById('cargo');
+        const mensagemErro = document.getElementById('mensagemErro');
+ 
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+ 
+            const email = emailInput.value.trim();
+            const senha = senhaInput.value;
+            const cargo = cargoSelect.value;
+ 
+            // Validar credenciais
+            if (credenciais[cargo] &&
+                credenciais[cargo].email === email &&
+                credenciais[cargo].senha === senha) {
+               
+                // Armazenar dados do usuário logado no localStorage
+                const usuarioLogado = {
+                    email: email,
+                    nome: credenciais[cargo].nome,
+                    matricula: credenciais[cargo].matricula,
+                    cargo: cargo,
+                    dataLogin: new Date().toLocaleString('pt-BR')
+                };
+               
+                localStorage.setItem('usuarioLogado', JSON.stringify(usuarioLogado));
+               
+                // Login bem-sucedido - redirecionar para a página do cargo
+                mensagemErro.style.display = 'none';
+                if (cargo === 'supervisor') {
+                    window.location.href = '/login/cargo/sup.html';
+                } else if (cargo === 'tecnico') {
+                    window.location.href = '/login/cargo/tec.html';
+                } else if (cargo === 'engenheiro') {
+                    window.location.href = '/login/cargo/eng.html';
+                }
+            } else {
+                // Login falhou
+                mensagemErro.textContent = ' E-mail, senha ou cargo incorretos!';
+                mensagemErro.style.display = 'block';
+                senhaInput.value = '';
+            }
+        });
+ 
+        // Mostrar credenciais ao selecionar um cargo (informativo)
+        cargoSelect.addEventListener('change', function() {
+            if (this.value && credenciais[this.value]) {
+                console.log(`Credenciais para ${this.value}:`, credenciais[this.value]);
+            }
+        });
+    </script>
+</body>
+</html>
